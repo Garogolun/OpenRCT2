@@ -260,6 +260,11 @@ void window_options_open()
 		(1ULL << WIDX_SOUND_PAUSED_CHECKBOX) |
 		(1ULL << WIDX_SAVE_PLUGIN_DATA_CHECKBOX);	// doesn't seem to work?
 
+	if (gConfigGeneral.fullscreen_mode == 0 || gConfigGeneral.fullscreen_mode == 2){
+		w->disabled_widgets |= (1 << WIDX_RESOLUTION_DROPDOWN);
+		w->disabled_widgets |= (1 << WIDX_RESOLUTION);
+	}
+
 	w->page = WINDOW_OPTIONS_PAGE_DISPLAY;
 	window_init_scroll_widgets(w);
 	w->colours[0] = 7;
@@ -594,7 +599,7 @@ static void window_options_dropdown()
 		break;
 	case WIDX_FULLSCREEN_DROPDOWN:
 		if (dropdownIndex != gConfigGeneral.fullscreen_mode){
-			if (dropdownIndex == 2){
+			if (dropdownIndex == 0 || dropdownIndex == 2){
 				w->disabled_widgets |= (1 << WIDX_RESOLUTION_DROPDOWN);
 				w->disabled_widgets |= (1 << WIDX_RESOLUTION);
 			} else {
