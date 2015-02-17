@@ -119,6 +119,7 @@ typedef struct general_configuration {
 	sint32 window_height;
 	uint16 language;
 	uint8 window_snap_proximity;
+	uint8 native_aspect_ratio;
 } general_configuration;
 
 typedef struct sound_configuration {

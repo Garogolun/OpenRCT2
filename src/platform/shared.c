@@ -42,7 +42,6 @@ int gTextInputCursorPosition = 0;
 
 int gNumResolutions = 0;
 resolution *gResolutions = NULL;
-int gResolutionsAllowAnyAspectRatio = 0;
 
 SDL_Window *gWindow;
 
@@ -99,7 +98,7 @@ void platform_update_fullscreen_resolutions()
 		SDL_GetDisplayMode(displayIndex, i, &mode);
 		
 		aspectRatio = (float)mode.w / mode.h;
-		if (gResolutionsAllowAnyAspectRatio || fabs(desktopAspectRatio - aspectRatio) < 0.0001f) {
+		if (!gConfigGeneral.native_aspect_ratio || fabs(desktopAspectRatio - aspectRatio) < 0.0001f) {
 			gResolutions[gNumResolutions].width = mode.w;
 			gResolutions[gNumResolutions].height = mode.h;
 			gNumResolutions++;

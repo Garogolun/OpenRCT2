@@ -62,6 +62,7 @@ enum WINDOW_OPTIONS_WIDGET_IDX {
 
 	WIDX_RESOLUTION,
 	WIDX_RESOLUTION_DROPDOWN,
+	WIDX_ASPECT_RATIO_CHECKBOX,
 	WIDX_FULLSCREEN,
 	WIDX_FULLSCREEN_DROPDOWN,
 	WIDX_TILE_SMOOTHING_CHECKBOX,
@@ -115,12 +116,13 @@ static rct_widget window_options_widgets[] = {
 	// Display tab
 	{ WWT_DROPDOWN,			0,	155,	299,	53,		64,		840,			STR_NONE },	// resolution
 	{ WWT_DROPDOWN_BUTTON,	0,	288,	298,	54,		63,		876,			STR_NONE },
-	{ WWT_DROPDOWN,			0,	155,	299,	68,		79,		871,			STR_NONE },	// fullscreen
-	{ WWT_DROPDOWN_BUTTON,	0,	288,	298,	69,		78,		876,			STR_NONE },
-	{ WWT_CHECKBOX,			0,	10,		299,	84,		95,		STR_TILE_SMOOTHING, STR_TILE_SMOOTHING_TIP },
-	{ WWT_CHECKBOX,			0,	10,		299,	99,		110,	STR_GRIDLINES,	STR_GRIDLINES_TIP },
-	{ WWT_DROPDOWN,			0,	155,	299,	113,	124,	STR_NONE,		STR_NONE },	// construction marker
-	{ WWT_DROPDOWN_BUTTON,	0,	288,	298,	114,	123,	876,			STR_NONE },
+	{ WWT_CHECKBOX,			0,	10,		299,	68,		79,		STR_ASPECT_RATIO, STR_ASPECT_RATIO_TIP },
+	{ WWT_DROPDOWN,			0,	155,	299,	84,		95,		871,			STR_NONE },	// fullscreen
+	{ WWT_DROPDOWN_BUTTON,	0,	288,	298,	85,		94,		876,			STR_NONE },
+	{ WWT_CHECKBOX,			0,	10,		299,	100,	111,	STR_TILE_SMOOTHING, STR_TILE_SMOOTHING_TIP },
+	{ WWT_CHECKBOX,			0,	10,		299,	115,	126,	STR_GRIDLINES,	STR_GRIDLINES_TIP },
+	{ WWT_DROPDOWN,			0,	155,	299,	129,	140,	STR_NONE,		STR_NONE },	// construction marker
+	{ WWT_DROPDOWN_BUTTON,	0,	288,	298,	130,	139,	876,			STR_NONE },
 
 	// Culture / units tab
 	{ WWT_DROPDOWN,			0,	155,	299,	53,		64,		STR_NONE,		STR_NONE },	// language
@@ -243,6 +245,7 @@ void window_options_open()
 		(1ULL << WIDX_DISTANCE_DROPDOWN) |
 		(1ULL << WIDX_RESOLUTION) |
 		(1ULL << WIDX_RESOLUTION_DROPDOWN) |
+		(1ULL << WIDX_ASPECT_RATIO_CHECKBOX) |
 		(1ULL << WIDX_FULLSCREEN) |
 		(1ULL << WIDX_FULLSCREEN_DROPDOWN) |
 		(1ULL << WIDX_TEMPERATURE) |
@@ -263,6 +266,7 @@ void window_options_open()
 	if (gConfigGeneral.fullscreen_mode == 0 || gConfigGeneral.fullscreen_mode == 2){
 		w->disabled_widgets |= (1 << WIDX_RESOLUTION_DROPDOWN);
 		w->disabled_widgets |= (1 << WIDX_RESOLUTION);
+		w->disabled_widgets |= (1 << WIDX_ASPECT_RATIO_CHECKBOX);
 	}
 
 	w->page = WINDOW_OPTIONS_PAGE_DISPLAY;
@@ -305,6 +309,12 @@ static void window_options_mouseup()
 	case WIDX_REAL_NAME_CHECKBOX:
 		RCT2_GLOBAL(RCT2_ADDRESS_PARK_FLAGS, uint32) ^= PARK_FLAGS_SHOW_REAL_GUEST_NAMES;
 		RCT2_CALLPROC_X(0x0069C52F, RCT2_GLOBAL(RCT2_ADDRESS_PARK_FLAGS, uint32) & PARK_FLAGS_SHOW_REAL_GUEST_NAMES ? 0 : 1, 0, 0, 0, 0, 0, 0);
+		break;
+	case WIDX_ASPECT_RATIO_CHECKBOX:
+		gConfigGeneral.native_aspect_ratio ^= 1;
+		config_save_default();
+		platform_update_fullscreen_resolutions();
+		gfx_invalidate_screen();
 		break;
 	case WIDX_TILE_SMOOTHING_CHECKBOX:
 		gConfigGeneral.landscape_smoothing ^= 1;
@@ -602,9 +612,11 @@ static void window_options_dropdown()
 			if (dropdownIndex == 0 || dropdownIndex == 2){
 				w->disabled_widgets |= (1 << WIDX_RESOLUTION_DROPDOWN);
 				w->disabled_widgets |= (1 << WIDX_RESOLUTION);
+				w->disabled_widgets |= (1 << WIDX_ASPECT_RATIO_CHECKBOX);
 			} else {
 				w->disabled_widgets &= ~(1 << WIDX_RESOLUTION_DROPDOWN);
 				w->disabled_widgets &= ~(1 << WIDX_RESOLUTION);
+				w->disabled_widgets &= ~(1 << WIDX_ASPECT_RATIO_CHECKBOX);
 			}
 			platform_set_fullscreen_mode(dropdownIndex);
 			
@@ -661,6 +673,12 @@ static void window_options_invalidate()
 		RCT2_GLOBAL(0x013CE952 + 18, uint16) = (uint16)gConfigGeneral.fullscreen_height;
 		RCT2_GLOBAL(0x013CE952 + 12, uint16) = 2773 + gConfigGeneral.fullscreen_mode;
 
+		// aspect ratio checkbox
+		if (gConfigGeneral.native_aspect_ratio)
+			w->pressed_widgets |= (1ULL << WIDX_ASPECT_RATIO_CHECKBOX);
+		else
+			w->pressed_widgets &= ~(1ULL << WIDX_ASPECT_RATIO_CHECKBOX);
+
 		// landscape tile smoothing checkbox
 		if ((RCT2_GLOBAL(RCT2_ADDRESS_CONFIG_FLAGS, uint8) & CONFIG_FLAG_DISABLE_SMOOTH_LANDSCAPE))
 			w->pressed_widgets &= ~(1ULL << WIDX_TILE_SMOOTHING_CHECKBOX);
@@ -678,6 +696,7 @@ static void window_options_invalidate()
 
 		window_options_widgets[WIDX_RESOLUTION].type = WWT_DROPDOWN;
 		window_options_widgets[WIDX_RESOLUTION_DROPDOWN].type = WWT_DROPDOWN_BUTTON;
+		window_options_widgets[WIDX_ASPECT_RATIO_CHECKBOX].type = WWT_CHECKBOX;
 		window_options_widgets[WIDX_FULLSCREEN].type = WWT_DROPDOWN;
 		window_options_widgets[WIDX_FULLSCREEN_DROPDOWN].type = WWT_DROPDOWN_BUTTON;
 		window_options_widgets[WIDX_TILE_SMOOTHING_CHECKBOX].type = WWT_CHECKBOX;

@@ -2707,8 +2707,8 @@ STR_2701    :???
 STR_2702    :???
 STR_2703    :???
 STR_2704    :???
-STR_2705    :???
-STR_2706    :???
+STR_2705    :Only native aspect ratio
+STR_2706    :{SMALLFONT}{BLACK}Show only resolutions with the native aspect ratio
 STR_2707    :Open new window
 STR_2708    :{WINDOW_COLOUR_1}Are you sure you want to overwrite {STRINGID}?
 STR_2709    :Overwrite
